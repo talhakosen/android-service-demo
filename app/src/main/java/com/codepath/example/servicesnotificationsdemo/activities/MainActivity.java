@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.codepath.example.servicesnotificationsdemo.R;
 import com.codepath.example.servicesnotificationsdemo.receiver.MyAlarmReceiver;
 import com.codepath.example.servicesnotificationsdemo.receiver.MySimpleReceiver;
+import com.codepath.example.servicesnotificationsdemo.services.ImageDownloadService;
 import com.codepath.example.servicesnotificationsdemo.services.MySimpleService;
 
 public class MainActivity extends Activity {
@@ -36,6 +37,17 @@ public class MainActivity extends Activity {
 		// Start the service
 		startService(i);
 	}
+
+	public void onImageDownloadService(View v) {
+		// Construct our Intent specifying the Service
+		Intent i = new Intent(this, ImageDownloadService.class);
+		// Add extras to bundle
+		i.putExtra("url", "http://www.zastavki.com/pictures/1920x1200/2010/World_Australia_River_in_Australia_022164_.jpg");
+		// Start the service
+		startService(i);
+	}
+
+
 	public void onStartAlarm(View v) {
 		// Construct an intent that will execute the AlarmReceiver
 		Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
