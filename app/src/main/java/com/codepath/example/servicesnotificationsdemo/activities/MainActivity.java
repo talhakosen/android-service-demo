@@ -3,12 +3,16 @@ package com.codepath.example.servicesnotificationsdemo.activities;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.view.Menu;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.codepath.example.servicesnotificationsdemo.R;
@@ -16,16 +20,31 @@ import com.codepath.example.servicesnotificationsdemo.receiver.MyAlarmReceiver;
 import com.codepath.example.servicesnotificationsdemo.receiver.MySimpleReceiver;
 import com.codepath.example.servicesnotificationsdemo.services.ImageDownloadService;
 import com.codepath.example.servicesnotificationsdemo.services.MySimpleService;
+import com.codepath.example.servicesnotificationsdemo.services.SimpleBindService;
 
 public class MainActivity extends Activity {
 	public MySimpleReceiver receiverForSimple;
 	private PendingIntent alarmPendingIntent;
+	SimpleBindService mBoundService;
+	boolean mServiceBound = false;
+	TextView timestampText;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		timestampText = (TextView)findViewById(R.id.timestamp_text);
 		setupServiceReceiver();
+		checkForMessage();
+
+
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.main, menu);
+		return true;
 	}
 
 	public void onSimpleService(View v) {
@@ -46,7 +65,6 @@ public class MainActivity extends Activity {
 		// Start the service
 		startService(i);
 	}
-
 
 	public void onStartAlarm(View v) {
 		// Construct an intent that will execute the AlarmReceiver
@@ -69,11 +87,20 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
-		return true;
+	public void onPrintTimeStamp(View v) {
+		if (mServiceBound) {
+			timestampText.setText(mBoundService.getTimestamp());
+		}
+	}
+
+	public void onStopService(View v) {
+		if (mServiceBound) {
+			unbindService(mServiceConnection);
+			mServiceBound = false;
+		}
+		Intent intent = new Intent(MainActivity.this, SimpleBindService.class);
+		stopService(intent);
+
 	}
 
 	// Setup the callback for when data is received from the service
@@ -91,5 +118,46 @@ public class MainActivity extends Activity {
 			}
 		});
 	}
+
+	// Checks to see if service passed in a message
+	private void checkForMessage() {
+		String message = getIntent().getStringExtra("message");
+		if (message != null) {
+			Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+		}
+	}
+
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		Intent intent = new Intent(this, SimpleBindService.class);
+		startService(intent);
+		bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		if (mServiceBound) {
+			unbindService(mServiceConnection);
+			mServiceBound = false;
+		}
+	}
+
+	private ServiceConnection mServiceConnection = new ServiceConnection() {
+
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			mServiceBound = false;
+		}
+
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			SimpleBindService.MyBinder myBinder = (SimpleBindService.MyBinder) service;
+			mBoundService = myBinder.getService();
+			mServiceBound = true;
+		}
+	};
 
 }
