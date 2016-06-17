@@ -1,17 +1,35 @@
 package com.codepath.example.servicesnotificationsdemo.activities;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
+import android.view.View;
+import android.widget.Toast;
 
 import com.codepath.example.servicesnotificationsdemo.R;
+import com.codepath.example.servicesnotificationsdemo.receiver.MySimpleReceiver;
+import com.codepath.example.servicesnotificationsdemo.services.MySimpleService;
 
 public class MainActivity extends Activity {
+	public MySimpleReceiver receiverForSimple;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		setupServiceReceiver();
+	}
+
+	public void onSimpleService(View v) {
+		// Construct our Intent specifying the Service
+		Intent i = new Intent(this, MySimpleService.class);
+		// Add extras to the bundle
+		i.putExtra("foo", "bar");
+		i.putExtra("receiver", receiverForSimple);
+		// Start the service
+		startService(i);
 	}
 
 	@Override
@@ -19,6 +37,22 @@ public class MainActivity extends Activity {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
+	}
+
+	// Setup the callback for when data is received from the service
+	public void setupServiceReceiver() {
+		receiverForSimple = new MySimpleReceiver(new Handler());
+		// This is where we specify what happens when data is received from the
+		// service
+		receiverForSimple.setReceiver(new MySimpleReceiver.Receiver() {
+			@Override
+			public void onReceiveResult(int resultCode, Bundle resultData) {
+				if (resultCode == RESULT_OK) {
+					String resultValue = resultData.getString("resultValue");
+					Toast.makeText(MainActivity.this, resultValue, Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
 	}
 
 }
