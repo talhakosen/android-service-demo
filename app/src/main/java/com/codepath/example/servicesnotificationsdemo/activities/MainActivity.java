@@ -19,21 +19,42 @@ import com.codepath.example.servicesnotificationsdemo.R;
 import com.codepath.example.servicesnotificationsdemo.receiver.MyAlarmReceiver;
 import com.codepath.example.servicesnotificationsdemo.receiver.MySimpleReceiver;
 import com.codepath.example.servicesnotificationsdemo.services.ImageDownloadService;
+import com.codepath.example.servicesnotificationsdemo.services.ImageDownloadService2;
 import com.codepath.example.servicesnotificationsdemo.services.MySimpleService;
 import com.codepath.example.servicesnotificationsdemo.services.SimpleBindService;
 
 public class MainActivity extends Activity {
 	public MySimpleReceiver receiverForSimple;
-	private PendingIntent alarmPendingIntent;
 	SimpleBindService mBoundService;
 	boolean mServiceBound = false;
 	TextView timestampText;
+	String[] logos = {"http://www.designrazor.net/wp-content/uploads/2015/01/restaurant-logo-design-examples-3.jpg",
+			"http://coolhomepages.com/thumbs/all_files/2011/09/09/itorae.jpg",
+			"http://www.designrazor.net/wp-content/uploads/2015/01/restaurant-logo-design-examples-12.png",
+			"https://s-media-cache-ak0.pinimg.com/736x/c0/e3/87/c0e3871b3374c245ce26ed783de0fb97.jpg",
+			"http://logos.bitra.com/images/banzara.jpg"};
+
+	private PendingIntent alarmPendingIntent;
+	private ServiceConnection mServiceConnection = new ServiceConnection() {
+
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			mServiceBound = false;
+		}
+
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			SimpleBindService.MyBinder myBinder = (SimpleBindService.MyBinder) service;
+			mBoundService = myBinder.getService();
+			mServiceBound = true;
+		}
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		timestampText = (TextView)findViewById(R.id.timestamp_text);
+		timestampText = (TextView) findViewById(R.id.timestamp_text);
 		setupServiceReceiver();
 		checkForMessage();
 
@@ -55,15 +76,43 @@ public class MainActivity extends Activity {
 		i.putExtra("receiver", receiverForSimple);
 		// Start the service
 		startService(i);
+
+		stopService(i);
 	}
 
 	public void onImageDownloadService(View v) {
+		startIntentService(logos[0]);
+		startIntentService(logos[1]);
+		startIntentService(logos[2]);
+		startIntentService(logos[3]);
+		startIntentService(logos[4]);
+
+	}
+
+	private void startIntentService(String logo) {
 		// Construct our Intent specifying the Service
 		Intent i = new Intent(this, ImageDownloadService.class);
 		// Add extras to bundle
-		i.putExtra("url", "http://www.zastavki.com/pictures/1920x1200/2010/World_Australia_River_in_Australia_022164_.jpg");
+		i.putExtra("url", logo);
 		// Start the service
 		startService(i);
+	}
+
+	private void startService(String logo) {
+		// Construct our Intent specifying the Service
+		Intent i = new Intent(this, ImageDownloadService2.class);
+		// Add extras to bundle
+		i.putExtra("url", logo);
+		// Start the service
+		startService(i);
+	}
+
+	public void onImageDownloadService2(View v) {
+		startService(logos[0]);
+		startService(logos[1]);
+		startService(logos[2]);
+		startService(logos[3]);
+		startService(logos[4]);
 	}
 
 	public void onStartAlarm(View v) {
@@ -127,7 +176,6 @@ public class MainActivity extends Activity {
 		}
 	}
 
-
 	@Override
 	protected void onStart() {
 		super.onStart();
@@ -144,20 +192,5 @@ public class MainActivity extends Activity {
 			mServiceBound = false;
 		}
 	}
-
-	private ServiceConnection mServiceConnection = new ServiceConnection() {
-
-		@Override
-		public void onServiceDisconnected(ComponentName name) {
-			mServiceBound = false;
-		}
-
-		@Override
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			SimpleBindService.MyBinder myBinder = (SimpleBindService.MyBinder) service;
-			mBoundService = myBinder.getService();
-			mServiceBound = true;
-		}
-	};
 
 }
